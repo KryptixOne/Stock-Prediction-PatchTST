@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 
 # Load data
-df = pd.read_csv('SPY_Daily_Data.csv')
+df = pd.read_csv('Data/SPY_Daily_Data.csv')
 
 
 # Assume 'timestamp' is the date column, and other columns are present as required
