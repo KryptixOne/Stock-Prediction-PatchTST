@@ -31,7 +31,7 @@ api_dict_GDP_PER_CAPITA = {
 # 3. Treasury Yield
 api_dict_TREASURY_YIELD = {
     'function': 'TREASURY_YIELD',
-    'interval': 'monthly',  # Supported intervals: daily, weekly, monthly
+    'interval': 'weekly',  # Supported intervals: daily, weekly, monthly
     'maturity': '10year',  # Supported maturities: 3month, 2year, 5year, 7year, 10year, 30year
     'apikey': api_key,
     'datatype': 'json',  # Optional; default is json, can be 'json' or 'csv'
@@ -40,7 +40,7 @@ api_dict_TREASURY_YIELD = {
 # 4. Federal Funds Rate
 api_dict_FED_FUNDS_RATE = {
     'function': 'FEDERAL_FUNDS_RATE',
-    'interval': 'monthly',  # Supported intervals: monthly, annual
+    'interval': 'weekly',  # Supported intervals: daily, weekly, monthly, annual
     'apikey': api_key,
     'datatype': 'json',  # Optional; default is json, can be 'json' or 'csv'
 }
@@ -48,7 +48,7 @@ api_dict_FED_FUNDS_RATE = {
 # 5. Consumer Price Index (CPI)
 api_dict_CPI = {
     'function': 'CPI',
-    'interval': 'monthly',  # Supported intervals: monthly, semiannual, annual
+    'interval': 'monthly',  # Supported intervals: monthly, semiannual
     'apikey': api_key,
     'datatype': 'json',  # Optional; default is json, can be 'json' or 'csv'
 }

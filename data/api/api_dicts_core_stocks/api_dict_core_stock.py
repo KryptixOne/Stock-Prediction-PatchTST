@@ -41,7 +41,7 @@ api_dict_DAILY_ADJUSTED = {
     'function': 'TIME_SERIES_DAILY_ADJUSTED',
     'symbol': symbol,
     'apikey': api_key,
-    'outputsize': 'compact',  # Optional; default is 'compact', can be 'full'
+    'outputsize': 'full',  # Optional; default is 'compact', can be 'full'
     'datatype': 'json',  # Optional; default is 'json', can be 'csv'
 }
 
