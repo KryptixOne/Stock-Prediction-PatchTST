@@ -14,7 +14,6 @@ def get_time_series_data(request_url):
     response = requests.get(request_url)
     return response.json()
 
-
 def convert_to_dataframe(time_series_data):
     df = pd.DataFrame.from_dict(time_series_data, orient='index')
     df.reset_index(inplace=True)
