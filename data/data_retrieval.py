@@ -35,6 +35,12 @@ def combine_data(json_data):
 
 
 def convert_to_dataframe(time_series_data):
+    """
+    For time series pricing data. comes out as a different format from this crap
+    :param time_series_data: output['Weekly Adjusted Time Series']
+    :return: dataframe
+    """
+
     df = pd.DataFrame.from_dict(time_series_data, orient='index')
     df.reset_index(inplace=True)
     df.rename(columns={
@@ -43,24 +49,51 @@ def convert_to_dataframe(time_series_data):
         '2. high': 'high',
         '3. low': 'low',
         '4. close': 'close',
-        '5. volume': 'volume'
+        '5. adjusted close': 'adjusted_close',
+        '6. volume': 'volume',
+        '7. dividend amount': 'dividend_amount'
     }, inplace=True)
+
+    # Convert 'timestamp' to datetime
+    df['timestamp'] = pd.to_datetime(df['timestamp'])
+
+    # Convert available columns to numeric
+    columns_to_convert = ['open', 'high', 'low', 'close', 'adjusted_close', 'volume', 'dividend_amount']
+    existing_columns = [col for col in columns_to_convert if col in df.columns]
+
+    df[existing_columns] = df[existing_columns].apply(pd.to_numeric)
+
     return df
 
+def convert_econdata_to_dataframe(econ_data):
+    """
+    Converts econ_data format to dataframe:
+
+    :param econ_data: econ_data = output['CPI']['data']
+    :return: df
+    """
+
+    df = pd.DataFrame(econ_data)
+    df['date'] = pd.to_datetime(df['date'])
+    return df
 def save_dataframe_to_csv(df, filename):
     df.to_csv(filename, index=False)
 
 def get_data(list_of_api_functions):
     output_dict = {}
-    for function in list_of_api_functions:
-        url = build_api_url(function)
-        output_data =send_get_url_request(url)
-        for entry in output_data:
-            if 'value' in entry:
-                # Convert the 'value' to a float and round it to 4 decimal places
-                entry['value'] = round(float(entry['value']), 4)
+    for func in list_of_api_functions:
+        if func['function'] == 'INFLATION':
+            pass
+        url = build_api_url(func)
+        output_data = send_get_url_request(url)
+        if 'data' in output_data:
+            for k in range(len(output_data['data'])):
+                cur_data = output_data['data'][k]
+                if 'value' in cur_data:
+                    # Convert the 'value' to a float and round it to 4 decimal places
+                    cur_data['value'] = round(float(cur_data['value']), 4)
 
-        output_dict[function['function']] = output_data
+        output_dict[func['function']] = output_data
     return output_dict
 
 
@@ -69,8 +102,8 @@ def get_data(list_of_api_functions):
 
 if __name__ == '__main__':
     # Symbols, API Key, etc
-    api_key = 'P6PNGBDDG24IDFDV'
-
+    #api_key = 'P6PNGBDDG24IDFDV'
+    api_key = 'SS7Q55X3XD2GDJKZ'
 
     # Add a label for each which classifies it as a certain sector.
     symbols = [

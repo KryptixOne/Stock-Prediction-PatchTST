@@ -25,6 +25,9 @@ def convert_to_dataframe(time_series_data):
         '4. close': 'close',
         '5. volume': 'volume'
     }, inplace=True)
+    df = df.apply(pd.to_numeric)
+    df.index = pd.to_datetime(df.index)
+
     return df
 
 
