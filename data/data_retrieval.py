@@ -47,10 +47,15 @@ if __name__ == '__main__':
     # Symbols, API Key, etc
     api_key = 'P6PNGBDDG24IDFDV'
     symbols = [
+        # Variety of stocks to train for price prediction. We Will need to build a large amount of technical indicators
+        # for these.
         "SPY", "QQQ", "DIA", "IWM", "VIXY", "EFA", "EWJ",  # Market Indices (ETFs)
         "TSLA", "AMZN", "NVDA", "GME", "AMD", "BABA",  # High Volatility Stocks
         "AAPL", "MSFT", "GOOGL", "FB", "NFLX", "BA", "XOM",  # Medium Volatility Stocks
         "JNJ", "KO", "PG", "PEP", "T", "VZ",  # Low Volatility Stocks
+
+        # These data points will serve as additional features. which will served in along side the input stock we aim to
+        # predict
         "EWW", "EWZ", "ASHR", "EWG",  # Global Exposure
         "USO", "GLD", "SLV", "DBA",  # Commodities
         "MU", "BYND", "PLTR", "RIVN",  # Very High Volatility Stocks
