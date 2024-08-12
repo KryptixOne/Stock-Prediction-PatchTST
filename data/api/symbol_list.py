@@ -110,6 +110,11 @@ symbol_dict = {
         'Energy': ["XLE", "XOP"],
         'Healthcare': ["XLV", "XBI"],
     },
+    'Very High Volatility Stocks': {
+        'Technology': ["MU", "PLTR", "TSM", "AMD", "NVDA"],
+        'Consumer Discretionary': ["BYND", "RIVN", "TSLA", "NIO", "PDD"],
+        'Energy': ["RIG", "CVX", "OXY", "FANG", "VLO"],
+    },
     'High Volatility Stocks': {
         'Consumer Discretionary': ["TSLA", "AMZN", "GME", "NIO", "BYND"],
         'Technology': ["NVDA", "AMD", "BABA", "SHOP", "PLTR"],
@@ -137,11 +142,7 @@ symbol_dict = {
         'Metals': ["GLD", "SLV", "PALL", "PLTM", "IAU"],
         'Agriculture': ["DBA", "CORN", "WEAT", "SOYB", "COW"],
     },
-    'Very High Volatility Stocks': {
-        'Technology': ["MU", "PLTR", "TSM", "AMD", "NVDA"],
-        'Consumer Discretionary': ["BYND", "RIVN", "TSLA", "NIO", "PDD"],
-        'Energy': ["RIG", "CVX", "OXY", "FANG", "VLO"],
-    },
+
     'Volatility Indices': {
         'General': ["VXX", "UVXY", "SVXY", "VIX"]
     }
