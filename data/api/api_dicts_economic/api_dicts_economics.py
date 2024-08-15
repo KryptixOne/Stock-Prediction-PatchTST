@@ -1,4 +1,4 @@
-"""Economic Data:
+"""Economic data:
 REAL_GDP: Measures the total value of all goods and services produced in a country, adjusted for inflation.
 REAL_GDP_PER_CAPITA: GDP divided by the population, giving an average economic output per person.
 TREASURY_YIELD: The return on U.S. government debt securities of varying maturities.

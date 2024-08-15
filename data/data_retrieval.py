@@ -9,6 +9,7 @@ from data.api import economic_data_functions, technical_volume_functions, techni
 from data.api.api_dicts_core_stocks.api_dict_core_stock import api_dict_DAILY_ADJUSTED, api_dict_WEEKLY_ADJUSTED
 from data.api import symbol_list, api_key
 
+
 def build_api_url(api_dict):
     base_url = 'https://www.alphavantage.co/query?'
     for key, val in api_dict.items():
@@ -46,6 +47,7 @@ def convert_to_dataframe(time_series_data):
     df = pd.DataFrame.from_dict(time_series_data, orient='index')
     df.reset_index(inplace=True)
     rename_dict = {'index': 'timestamp'}
+    df.rename(columns=rename_dict, inplace=True)
     # Convert 'timestamp' to datetime
     df['timestamp'] = pd.to_datetime(df['timestamp'])
 
@@ -59,17 +61,53 @@ def convert_to_dataframe(time_series_data):
     return df
 
 
-def convert_econdata_to_dataframe(econ_data):
+def convert_econdata_to_dataframe(data_in,
+                                  function_name:str = ''):
     """
-    Converts econ_data format to dataframe:
+    Converts single econ_data format to dataframe:
 
-    :param econ_data: econ_data = output['CPI']['data']
+    :param data_in: econ_data = output['CPI']['data']
     :return: df
     """
 
-    df = pd.DataFrame(econ_data)
-    df['date'] = pd.to_datetime(df['date'])
+    df = pd.DataFrame(data_in)
+    rename_dict = {'value': function_name + '_value',
+                   'date': 'timestamp'}
+    df.rename(columns=rename_dict, inplace=True)
+    print(df.head())
+    df['timestamp'] = pd.to_datetime(df['timestamp'])
+
+    columns_to_convert = list(df.columns)
+    columns_to_convert.remove('timestamp')
+    existing_columns = [col for col in columns_to_convert if col in df.columns]
+
+    df[existing_columns] = df[existing_columns].apply(pd.to_numeric)
     return df
+
+
+def build_complete_econ_dataframe(all_econ_data):
+    econ_functions = list(all_econ_data.keys())
+    complete_df = None
+    for x in econ_functions:
+        df = convert_econdata_to_dataframe(all_econ_data[x]['data'],
+                                           function_name=x)
+        if not isinstance(complete_df,pd.DataFrame):
+            complete_df = df
+        else:
+            complete_df = complete_df.merge(df, on='timestamp', how='outer')
+            complete_df = complete_df.sort_values(by='timestamp').ffill()
+
+        for col in complete_df.columns:
+            if col != 'timestamp':
+                complete_df[col] = complete_df[col].astype(float)
+
+        columns_to_convert = list(complete_df.columns)
+        columns_to_convert.remove('timestamp')
+        existing_columns = [col for col in columns_to_convert if col in complete_df.columns]
+
+        complete_df[existing_columns] = complete_df[existing_columns].apply(pd.to_numeric)
+
+    return complete_df
 
 
 def save_dataframe_to_csv(df, filename):
@@ -97,7 +135,6 @@ def get_data(list_of_api_functions):
 if __name__ == '__main__':
     # Symbols and API Key
 
-
     api_key = api_key.api_key
     symbol_dict = symbol_list.symbol_dict
     # Get Historical Info per symbol:
@@ -109,7 +146,7 @@ if __name__ == '__main__':
         technical_volatility_functions,
         technical_moving_avg_functions
     ]
-
+    econ_data = None
     for category, sectors in symbol_dict.items():
         for sector, symbols in sectors.items():
             for symbol in symbols:
@@ -118,8 +155,10 @@ if __name__ == '__main__':
 
                 input_list_core = [api_dict_WEEKLY_ADJUSTED]
                 output = get_data(input_list_core)
-
-                output.update(get_data(economic_data_functions))
+                # Grabs Econ Data Once to prevent pinging API too many times.
+                if econ_data is None:
+                    econ_data = get_data(economic_data_functions)
+                    econ_data.to_csv('Economic_data_historical.csv')
 
                 # Update Symbol based functions
                 for functions in function_groups:
