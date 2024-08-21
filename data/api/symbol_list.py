@@ -1,4 +1,3 @@
-
 """
 Company breakdown:
 
@@ -100,7 +99,9 @@ Company breakdown:
 
 """
 
-
+sector_list = ['General', 'Technology', 'Consumer Discretionary', 'Energy',
+               'Healthcare', 'Industrials', 'Consumer Staples',
+               'Communication Services', 'Utilities', 'Metals', 'Agriculture']
 
 symbol_dict = {
     'Market Indices (ETFs)': {

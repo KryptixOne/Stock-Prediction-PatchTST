@@ -8,7 +8,7 @@ from data.api import economic_data_functions, technical_volume_functions, techni
     technical_moving_avg_functions
 from data.api.api_dicts_core_stocks.api_dict_core_stock import api_dict_DAILY_ADJUSTED, api_dict_WEEKLY_ADJUSTED
 from data.api import symbol_list, api_key
-
+import os
 
 def build_api_url(api_dict):
     base_url = 'https://www.alphavantage.co/query?'
@@ -52,7 +52,7 @@ def convert_to_dataframe(time_series_data):
     df['timestamp'] = pd.to_datetime(df['timestamp'])
 
     # Convert available columns to numeric
-    columns_to_convert = list(df.columns[1:])
+    columns_to_convert = list(df.columns)
     columns_to_convert.remove('timestamp')
     existing_columns = [col for col in columns_to_convert if col in df.columns]
 
@@ -128,6 +128,10 @@ def build_complete_technical_dataframe(all_technical_data):
                                                          f' got {type(all_technical_data[x])} ')
         cur_keys = list(all_technical_data[x].keys())
         # Expected keys ['Meta_Data', Function Name]
+        if 'Information' in cur_keys:
+            print('Api limit reached, continuing')
+            continue
+
         assert len(cur_keys) == 2, f'Expected number of keys is 2. Got {len(cur_keys)}'
 
         df = convert_to_dataframe(all_technical_data[x][cur_keys[1]])
@@ -176,11 +180,31 @@ def get_data(list_of_api_functions):
 
 
 if __name__ == '__main__':
+    """
+    Notes on time_period_list choice:
+    
+    Intraday (1-minute, 5-minute, 15-minute, 30-minute, 1-hour):
+    Day Trading: These short time frames are used by day traders who open and close positions within the same trading day. They focus on very short-term price movements and rely heavily on technical analysis for quick decision-making.
+    
+    Short-Term (1-day, 2-day, 5-day, 15-day):
+    Swing Trading: Swing traders hold positions for several days or weeks. They use short-term technical analysis to capture price swings within a trend.
+    
+    Medium-Term (1-month, 3-month, 6-month):
+    Position Trading: Position traders have a longer-term perspective and may hold positions for several months. They use medium-term technical analysis to make decisions on trend direction and entry/exit points.
+    
+    Long-Term (1-year, 3-year, 5-year, 10-year):
+    Investing: Long-term investors, such as buy-and-hold investors, use technical analysis to analyze the overall health of a stock, identify potential entry points, and determine the best times to rebalance or exit long-term positions.
+
+    """
+
     # Symbols and API Key
+    save_dir = './raw_data'
     update_econ_data = False
+    time_period_list = [7,14,28,60,90] # Currently not used
 
     api_key = api_key.api_key
     symbol_dict = symbol_list.symbol_dict
+    sector_list = symbol_list.sector_list
     # Get Historical Info per symbol:
     function_groups = [
         economic_data_functions,
@@ -213,8 +237,14 @@ if __name__ == '__main__':
                 # Update Symbol based functions
                 for functions in function_groups:
                     for function in functions:
+                        all_keys = list(function.keys())
                         function['symbol'] = symbol
                         function['apikey'] = api_key
+
+                        # Add time period update here
+
+
+
 
                 all_tech_indicators = [
                     technical_moving_avg_functions,
@@ -232,7 +262,12 @@ if __name__ == '__main__':
                 completed_technical_df = build_complete_technical_dataframe(output)
 
                 # Add Sector column before saving
+                completed_technical_df['sector'] = sector_list.index(sector)
+                # Save Csv
+                save_path = os.path.join(save_dir, category)
+                os.makedirs(save_path, exist_ok=True)
+                save_path_name = os.path.join(save_path, f'{symbol}_Price_Technical.csv')
+                completed_technical_df.to_csv(save_path_name)
 
-
-                completed_technical_df.to_csv(f'{symbol}_Price_Technical')
                 print(f'Acquired information for {symbol} in {category} - {sector}')
+
