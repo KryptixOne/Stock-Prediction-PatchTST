@@ -250,7 +250,7 @@ if __name__ == '__main__':
                 input_list_core = [api_dict_WEEKLY_ADJUSTED]
                 output = get_data(input_list_core)
 
-                # Get Econ Data Once to prevent pinging API too many times.
+                # Get Econ Data
                 if update_econ_data:
                     econ_data = get_data(economic_data_functions)
                     econ_data_formatted = build_complete_econ_dataframe(econ_data)
@@ -269,6 +269,7 @@ if __name__ == '__main__':
                     technical_oscillators_functions,
                     technical_volume_functions
                 ]
+                # Get Technical Data.
                 if obtain_technical_data:
                     for indicators in all_tech_indicators:
                         output.update(get_data(indicators))
