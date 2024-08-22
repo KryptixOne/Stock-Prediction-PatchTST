@@ -70,7 +70,7 @@ api_dict_RETAIL_SALES = {
 
 # 8. Durable Goods Orders
 api_dict_DURABLE_GOODS = {
-    'function': 'DURABLE_GOODS',
+    'function': 'DURABLES',
     'interval': 'monthly',  # Supported intervals: monthly, annual
     'apikey': api_key,
     'datatype': 'json',  # Optional; default is json, can be 'json' or 'csv'

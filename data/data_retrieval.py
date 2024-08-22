@@ -10,6 +10,7 @@ from data.api.api_dicts_core_stocks.api_dict_core_stock import api_dict_DAILY_AD
 from data.api import symbol_list, api_key
 import os
 
+
 def build_api_url(api_dict):
     base_url = 'https://www.alphavantage.co/query?'
     for key, val in api_dict.items():
@@ -179,29 +180,44 @@ def get_data(list_of_api_functions):
     return output_dict
 
 
+def save_dataframe_as_csv(df, save_dir, category, symbol):
+    save_path = os.path.join(save_dir, category)
+    os.makedirs(save_path, exist_ok=True)
+    save_path_name = os.path.join(save_path, f'{symbol}_Price_Technical.csv')
+    df.to_csv(save_path_name)
+    return None
+
 if __name__ == '__main__':
     """
     Notes on time_period_list choice:
     
     Intraday (1-minute, 5-minute, 15-minute, 30-minute, 1-hour):
-    Day Trading: These short time frames are used by day traders who open and close positions within the same trading day. They focus on very short-term price movements and rely heavily on technical analysis for quick decision-making.
+    Day Trading: These short time frames are used by day traders who open and close positions within the same trading 
+    day.They focus on very short-term price movements and rely heavily on technical analysis for quick decision-making.
     
     Short-Term (1-day, 2-day, 5-day, 15-day):
-    Swing Trading: Swing traders hold positions for several days or weeks. They use short-term technical analysis to capture price swings within a trend.
+    Swing Trading: Swing traders hold positions for several days or weeks. They use short-term technical analysis to 
+    capture price swings within a trend.
     
     Medium-Term (1-month, 3-month, 6-month):
-    Position Trading: Position traders have a longer-term perspective and may hold positions for several months. They use medium-term technical analysis to make decisions on trend direction and entry/exit points.
+    Position Trading: Position traders have a longer-term perspective and may hold positions for several months. They
+    use medium-term technical analysis to make decisions on trend direction and entry/exit points.
     
     Long-Term (1-year, 3-year, 5-year, 10-year):
-    Investing: Long-term investors, such as buy-and-hold investors, use technical analysis to analyze the overall health of a stock, identify potential entry points, and determine the best times to rebalance or exit long-term positions.
+    Investing: Long-term investors, such as buy-and-hold investors, use technical analysis to analyze the overall health
+    of a stock, identify potential entry points, and determine the best times to rebalance or exit long-term positions.
 
     """
 
     # Symbols and API Key
     save_dir = './raw_data'
-    update_econ_data = False
-    time_period_list = [7,14,28,60,90] # Currently not used
+    update_econ_data = True
+    obtain_technical_data = False
 
+    # Time period for technical analysis to take into consideration.
+    time_period = 15
+
+    # Get API and symbol/sector info.
     api_key = api_key.api_key
     symbol_dict = symbol_list.symbol_dict
     sector_list = symbol_list.sector_list
@@ -214,37 +230,37 @@ if __name__ == '__main__':
         technical_volatility_functions,
         technical_moving_avg_functions
     ]
+
     econ_data = None
     for category, sectors in symbol_dict.items():
         for sector, symbols in sectors.items():
             for symbol in symbols:
-                api_dict_WEEKLY_ADJUSTED['symbol'] = symbol
-                api_dict_WEEKLY_ADJUSTED['apikey'] = api_key
-
-                input_list_core = [api_dict_WEEKLY_ADJUSTED]
-                output = get_data(input_list_core)
-
-                # Grabs Econ Data Once to prevent pinging API too many times.
-                if update_econ_data:
-                    econ_data = get_data(economic_data_functions)
-                    econ_data_formatted = build_complete_econ_dataframe(econ_data)
-                    econ_data_formatted.to_csv('Economic_data_historical.csv')
-                    # Remove data for memory efficiency
-                    del econ_data
-                    del econ_data_formatted
-                    update_econ_data = False
-
                 # Update Symbol based functions
                 for functions in function_groups:
                     for function in functions:
                         all_keys = list(function.keys())
                         function['symbol'] = symbol
                         function['apikey'] = api_key
+                        if 'time_period' in all_keys:
+                            function['time_period'] = time_period
 
-                        # Add time period update here
+                # Get base price info
+                api_dict_WEEKLY_ADJUSTED['symbol'] = symbol
+                api_dict_WEEKLY_ADJUSTED['apikey'] = api_key
+                input_list_core = [api_dict_WEEKLY_ADJUSTED]
+                output = get_data(input_list_core)
 
-
-
+                # Get Econ Data Once to prevent pinging API too many times.
+                if update_econ_data:
+                    econ_data = get_data(economic_data_functions)
+                    econ_data_formatted = build_complete_econ_dataframe(econ_data)
+                    econ_dir = os.path.join(save_dir,'Economic_Data')
+                    os.makedirs(econ_dir, exist_ok=True)
+                    econ_data_formatted.to_csv(os.path.join(econ_dir ,'Economic_data_historical.csv'))
+                    # Remove data for memory efficiency
+                    del econ_data
+                    del econ_data_formatted
+                    update_econ_data = False
 
                 all_tech_indicators = [
                     technical_moving_avg_functions,
@@ -253,21 +269,20 @@ if __name__ == '__main__':
                     technical_oscillators_functions,
                     technical_volume_functions
                 ]
-                for indicators in all_tech_indicators:
-                    output.update(get_data(indicators))
-                # Put a wait timer here. To prevent Overloading API.
-                # timer.pause()
-                # Depending on API Key level (max_pings per min)/60 = wait timer
+                if obtain_technical_data:
+                    for indicators in all_tech_indicators:
+                        output.update(get_data(indicators))
+
+                        # Put a wait timer here. To prevent Overloading API.
+                        # timer.pause()
+                        # Depending on API Key level (max_pings per min)/60 = wait timer
 
                 completed_technical_df = build_complete_technical_dataframe(output)
-
-                # Add Sector column before saving
+                assert completed_technical_df is not None, ('Output dataframe is NoneType. Check that api limit is not '
+                                                            'reached')
                 completed_technical_df['sector'] = sector_list.index(sector)
                 # Save Csv
-                save_path = os.path.join(save_dir, category)
-                os.makedirs(save_path, exist_ok=True)
-                save_path_name = os.path.join(save_path, f'{symbol}_Price_Technical.csv')
-                completed_technical_df.to_csv(save_path_name)
+                save_dataframe_as_csv(df=completed_technical_df, save_dir=save_dir,
+                                      category=category, symbol=symbol)
 
                 print(f'Acquired information for {symbol} in {category} - {sector}')
-
