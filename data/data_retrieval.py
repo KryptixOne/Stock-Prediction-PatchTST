@@ -183,7 +183,7 @@ def get_data(list_of_api_functions):
 def save_dataframe_as_csv(df, save_dir, category, symbol):
     save_path = os.path.join(save_dir, category)
     os.makedirs(save_path, exist_ok=True)
-    save_path_name = os.path.join(save_path, f'{symbol}_Price_Technical.csv')
+    save_path_name = os.path.join(save_path, f'{symbol}_Price.csv')
     df.to_csv(save_path_name)
     return None
 
@@ -211,7 +211,7 @@ if __name__ == '__main__':
 
     # Symbols and API Key
     save_dir = './raw_data'
-    update_econ_data = True
+    update_econ_data = False
     obtain_technical_data = False
 
     # Time period for technical analysis to take into consideration.
@@ -219,7 +219,7 @@ if __name__ == '__main__':
 
     # Get API and symbol/sector info.
     api_key = api_key.api_key
-    symbol_dict = symbol_list.symbol_dict
+    symbol_dict = symbol_list.nyse_sectors
     sector_list = symbol_list.sector_list
     # Get Historical Info per symbol:
     function_groups = [
@@ -284,6 +284,6 @@ if __name__ == '__main__':
                 completed_technical_df['sector'] = sector_list.index(sector)
                 # Save Csv
                 save_dataframe_as_csv(df=completed_technical_df, save_dir=save_dir,
-                                      category=category, symbol=symbol)
+                                      category=sector, symbol=symbol)
 
                 print(f'Acquired information for {symbol} in {category} - {sector}')
