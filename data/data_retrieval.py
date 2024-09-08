@@ -9,6 +9,7 @@ from data.api import economic_data_functions, technical_volume_functions, techni
 from data.api.api_dicts_core_stocks.api_dict_core_stock import api_dict_DAILY_ADJUSTED, api_dict_WEEKLY_ADJUSTED
 from data.api import symbol_list, api_key
 import os
+import time
 
 
 def build_api_url(api_dict):
@@ -211,7 +212,7 @@ if __name__ == '__main__':
 
     # Symbols and API Key
     save_dir = './raw_data'
-    update_econ_data = False
+    update_econ_data = True
     obtain_technical_data = False
 
     # Time period for technical analysis to take into consideration.
@@ -245,10 +246,14 @@ if __name__ == '__main__':
                             function['time_period'] = time_period
 
                 # Get base price info
-                api_dict_WEEKLY_ADJUSTED['symbol'] = symbol
-                api_dict_WEEKLY_ADJUSTED['apikey'] = api_key
-                input_list_core = [api_dict_WEEKLY_ADJUSTED]
+                api_dict_DAILY_ADJUSTED['symbol'] = symbol
+                api_dict_DAILY_ADJUSTED['apikey'] = api_key
+                input_list_core = [api_dict_DAILY_ADJUSTED]
                 output = get_data(input_list_core)
+
+                if 'Error Message' in output[list(output.keys())[0]].keys():
+                    print(f'Symbol {symbol} does not exist, got  f{output[list(output.keys())[0]]}')
+                    continue
 
                 # Get Econ Data
                 if update_econ_data:
@@ -287,3 +292,5 @@ if __name__ == '__main__':
                                       category=sector, symbol=symbol)
 
                 print(f'Acquired information for {symbol} in {category} - {sector}')
+                # Due to api restrictions
+                time.sleep(0.85)

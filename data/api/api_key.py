@@ -1,1 +1,3 @@
-api_key = 'SS7Q55X3XD2GDJKZ'
+
+# Premium API KEY
+api_key = 'UQWFNEZKOGW0RYW8'

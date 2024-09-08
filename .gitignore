@@ -5,3 +5,5 @@
 **/__pycache__/
 data/raw_data
 papers
+
+data/api/api_key.py
