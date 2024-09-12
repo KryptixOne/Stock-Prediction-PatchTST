@@ -36,7 +36,7 @@ class StockForecastDataset(Dataset):
         df = df.sort_values('timestamp').reset_index(drop=True)
 
         # Extract relevant features (open, close, volume) and labels
-        features = df[['1. open', '4. close', '6. volume']].values
+        features = df[['1. open', '2. high', '3. low', '4. close', '5. adjusted close', '6. volume']].values
         labels = df[['Forecast 1 Week', 'Forecast 2 Week', 'Forecast 3 Week', 'Forecast 4 Week']].values
 
         # Return the sliding window and the corresponding labels
@@ -69,4 +69,3 @@ class StockForecastDataset(Dataset):
             features = self.transform(features)
 
         return features, labels
-
