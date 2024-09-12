@@ -10,22 +10,28 @@ class StockForecastDataset(Dataset):
         self.window_size = window_size
         self.transform = transform
         self.sector_files = []
-        self.data = []
 
-        # Collect all CSV file paths in subdirectories
-        for root, _, files in os.walk(data_dir):
+        # Collect all CSV file paths in subdirectories, except "Economic_Data"
+        for root, dirs, files in os.walk(data_dir):
+            if 'Economic_Data' in dirs:
+                dirs.remove('Economic_Data')  # Exclude the 'Economic_Data' directory
             for file in files:
                 if file.endswith(".csv"):
                     self.sector_files.append(os.path.join(root, file))
 
-        # Load and preprocess data from each file
+        # Store the total length (number of sliding windows across all files)
+        self.total_windows = self._calculate_total_windows()
+
+    def _calculate_total_windows(self):
+        total_windows = 0
         for csv_path in self.sector_files:
             df = pd.read_csv(csv_path)
-            df = self.preprocess_data(df)
-            self.data.extend(df)
+            total_windows += max(0, len(df) - self.window_size)
+        return total_windows
 
-    def preprocess_data(self, df):
-        # Ensure the dataframe is sorted by date
+    def _get_data_from_file(self, csv_path, start_idx):
+        # Read the specific CSV file and return the data corresponding to the window
+        df = pd.read_csv(csv_path)
         df['timestamp'] = pd.to_datetime(df['timestamp'])
         df = df.sort_values('timestamp').reset_index(drop=True)
 
@@ -33,20 +39,29 @@ class StockForecastDataset(Dataset):
         features = df[['1. open', '4. close', '6. volume']].values
         labels = df[['Forecast 1 Week', 'Forecast 2 Week', 'Forecast 3 Week', 'Forecast 4 Week']].values
 
-        # Create sliding windows of 90 days
-        windowed_data = []
-        for i in range(len(df) - self.window_size):
-            window = features[i:i + self.window_size]
-            target_labels = labels[i + self.window_size - 1]  # Labels for the most recent day of the window
-            windowed_data.append((window, target_labels))
+        # Return the sliding window and the corresponding labels
+        window_features = features[start_idx:start_idx + self.window_size]
+        window_labels = labels[start_idx + self.window_size - 1]  # Labels for the most recent day of the window
 
-        return windowed_data
+        return window_features, window_labels
 
     def __len__(self):
-        return len(self.data)
+        return self.total_windows
 
     def __getitem__(self, idx):
-        features, labels = self.data[idx]
+        # Locate the corresponding CSV file and sliding window based on idx
+        window_count = 0
+        for csv_path in self.sector_files:
+            df = pd.read_csv(csv_path)
+            num_windows = max(0, len(df) - self.window_size)
+            if window_count + num_windows > idx:
+                # This file contains the required window
+                file_idx = idx - window_count
+                features, labels = self._get_data_from_file(csv_path, file_idx)
+                break
+            window_count += num_windows
+
+        # Convert to torch tensors
         features = torch.tensor(features, dtype=torch.float32)
         labels = torch.tensor(labels, dtype=torch.long)  # Labels are categorical
 
@@ -55,20 +70,3 @@ class StockForecastDataset(Dataset):
 
         return features, labels
 
-
-# Example usage of DataLoader
-data_dir = '/path/to/your/dataset'
-window_size = 90
-batch_size = 32
-
-# Instantiate dataset
-dataset = StockForecastDataset(data_dir=data_dir, window_size=window_size)
-
-# Create DataLoader
-dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
-
-# Example iteration through DataLoader
-for batch_features, batch_labels in dataloader:
-    print("Batch features shape:", batch_features.shape)  # Should be [batch_size, 90, 3]
-    print("Batch labels shape:", batch_labels.shape)  # Should be [batch_size, 4]
-    # These would be fed into your model
