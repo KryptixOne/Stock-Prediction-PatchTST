@@ -5,7 +5,7 @@ from torch.utils.data import Dataset, DataLoader
 
 
 class StockForecastDataset(Dataset):
-    def __init__(self, data_dir, window_size=90, transform=None):
+    def __init__(self, data_dir, window_size=200, transform=None):
         self.data_dir = data_dir
         self.window_size = window_size
         self.transform = transform
