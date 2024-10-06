@@ -5,11 +5,12 @@ from torch.utils.data import Dataset, DataLoader
 
 
 class StockForecastDataset(Dataset):
-    def __init__(self, data_dir, window_size=200, transform=None):
+    def __init__(self, data_dir, window_size=200, transform=None, device='cpu'):
         self.data_dir = data_dir
         self.window_size = window_size
         self.transform = transform
         self.sector_files = []
+        self.device = device
 
         # Collect all CSV file paths in subdirectories, except "Economic_Data"
         for root, dirs, files in os.walk(data_dir):
@@ -18,6 +19,10 @@ class StockForecastDataset(Dataset):
             for file in files:
                 if file.endswith(".csv"):
                     self.sector_files.append(os.path.join(root, file))
+                if len(self.sector_files) > 5:
+                    break
+            if len(self.sector_files) > 5:
+                break
 
         # Store the total length (number of sliding windows across all files)
         self.total_windows = self._calculate_total_windows()
@@ -36,7 +41,7 @@ class StockForecastDataset(Dataset):
         df = df.sort_values('timestamp').reset_index(drop=True)
 
         # Extract relevant features (open, close, volume) and labels
-        features = df[['1. open', '2. high', '3. low', '4. close', '5. adjusted close', '6. volume']].values
+        features = df[['1. open', '2. high', '3. low', '5. adjusted close', '6. volume']].values
         labels = df[['Forecast 1 Week', 'Forecast 2 Week', 'Forecast 3 Week', 'Forecast 4 Week']].values
 
         # Return the sliding window and the corresponding labels
@@ -62,10 +67,24 @@ class StockForecastDataset(Dataset):
             window_count += num_windows
 
         # Convert to torch tensors
-        features = torch.tensor(features, dtype=torch.float32)
-        labels = torch.tensor(labels, dtype=torch.long)  # Labels are categorical
+
+        features = torch.tensor(features, dtype=torch.float16).to(self.device)
+        labels = torch.tensor(labels, dtype=torch.long).to(self.device)
 
         if self.transform:
             features = self.transform(features)
 
         return features, labels
+
+
+"""# Example usage of DataLoader
+data_dir = 'D:/StockPricePrediction/data/raw_data'
+window_size = 90
+batch_size = 1
+device = 'cuda'
+# Instantiate dataset
+dataset = StockForecastDataset(data_dir=data_dir, window_size=window_size)
+
+# Create DataLoader
+dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, device=device)
+"""
