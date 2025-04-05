@@ -1,3 +1,3 @@
 
 # Premium API KEY
-api_key = 'UQWFNEZKOGW0RYW8'
+api_key = 'YourAPIKey'
